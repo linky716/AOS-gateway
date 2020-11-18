@@ -1,0 +1,16 @@
+AOS协议运行在单独的镜像中，AOS节点绑定方式与普通节点不同，在绑定前判断该节点为AOS节点，则调用AOS节点绑定脚本。该脚本的绑定步骤如下：
+
+1、脚本运行指令为  
+./kube-bind_v3.sh leo1（节点名） 1（port） 10.0.11.11/24(节点ip) leo1_1(网卡名)  
+根据参数，产生两对网卡对，leo1_1 和leo1_1_eth0  以及leo1_1_eth1 和leo1_1_eth1_ovs  
+其中leo1_1与节点绑定，leo1_1_eth0为对应连接网关的网卡。leo1_1_eth1为网关的另一端网卡，与其成对的leo1_1_eth1_ovs为网关在ovs上的端口  
+运行指令时，网关容器由脚本指令完成创建并生成一个mac地址，该mac地址指定为leo1_1和leo1_1_eth1的mac地址，这样做的目的是欺诈ovs接收arp包以及数据包。  
+
+为了实现AOS网关的一一对应，网关在运行前需要读取数据库的selectlink表获取网卡配对关系，并写入aos_table表，然后将自己的mac地址上传到aos_table并读取目的网关的mac地址。  
+网关所用镜像名quagga_snmp:va
+
+对接内容：  
+1、数据库里有aos_table表项，表目包含sourceport、destport、srcmac、destmac  
+2、网关节点需要自动运行/home/MobileIP-master/analyze.py脚本，该代码与普通节点的代码名称相同，但是内容不同。  
+3、与AOS网关相连的节点在geo对端有对应的网关和网段，与普通节点的网段区分。节点的其它运行与普通节点一样
+
